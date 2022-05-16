@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
+import java.util.NoSuchElementException;
+
+import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
 @Transactional
@@ -23,8 +26,16 @@ class MemberRepositoryV0Test {
         //findById
         Member findMember = memberRepositoryV0.findById(member.getMemberId());
         log.info("findMember={}",findMember);
+        assertThat(member).isEqualTo(findMember);
 
-        Assertions.assertThat(member).isEqualTo(findMember);
+        //update: money:10000->20000
+        memberRepositoryV0.update(member.getMemberId(), 20000);
+        Member updateMember = memberRepositoryV0.findById(member.getMemberId());
+        assertThat(updateMember.getMoney()).isEqualTo(20000);
+
+        //delete
+        memberRepositoryV0.delete(member.getMemberId());
+        assertThatThrownBy(()-> memberRepositoryV0.findById(member.getMemberId())).isInstanceOf(NoSuchElementException.class);
     }
 
 }
