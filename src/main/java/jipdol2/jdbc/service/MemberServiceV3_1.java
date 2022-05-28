@@ -51,22 +51,6 @@ public class MemberServiceV3_1 {
         repository.update(toId,toMember.getMoney()+ money);
     }
 
-    private void release(Connection con) {
-        if(con !=null){
-            try{
-                /**
-                 * connection을 close 하면 종료시키는 것이 아니라 connection pool 에 반납하게 된다.
-                 * 그래서 이 connection을 다시 사용하는 사람은 자동커밋이 되어있다고 생각한다.
-                 * 그렇기 때문에 자동커밋으로 설정해주어야 한다.
-                 */
-                con.setAutoCommit(true);
-                con.close();
-            }catch (Exception e){
-                log.info("error",e);
-            }
-        }
-    }
-
     private void validation(Member toMember) {
         if(toMember.getMemberId().equals("ex")){
             throw new IllegalStateException("이체중 예외 발생");

@@ -1,18 +1,23 @@
 package jipdol2.jdbc.service;
 
 import jipdol2.jdbc.domain.Member;
-import jipdol2.jdbc.repository.MemberRepositoryV2;
 import jipdol2.jdbc.repository.MemberRepositoryV3;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.internal.util.Platform;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 
 import static jipdol2.jdbc.connection.ConnectionConst.*;
@@ -20,24 +25,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 트랜잭션 - 트랜잭션 매니저
+ * 트랜잭션 - DataSource, transaction 매니저 자동등록
  */
 @Slf4j
-class MemberServiceV3_1Test {
+@SpringBootTest
+/**
+ * @SpringBootTest 를 사용하지 않으면 에러가 발생한다. 그 이유는 로직실패시 예외가 터지면 rollback이 되어야 하는데,
+ * 현재 MemberServiceV3_3는 @Transactional 어노테이션을 사용하고 있기 때문에 '스프링 컨테이너'에 해당 객체들이 등록이 되어있는 상태여야 된다.
+ * 그러나 memberRepository 나 memberService는 스프링 Bean 에 등록하지 않고, 직접 만들어 사용하기 때문에 에러가 발생하는 것이다.
+ * @SpringBootTest 를 사용하면 이런 객체들을 스프링Bean으로 등록을 해준다.
+ */
+
+class MemberServiceV3_4Test {
     public static final String MEMBER_A = "memberA";
     public static final String MEMBER_B = "memberB";
     public static final String MEMBER_EX = "ex";
 
+    @Autowired
     private MemberRepositoryV3 memberRepository;
-    private MemberServiceV3_1 memberService;
+    @Autowired
+    private MemberServiceV3_3 memberService;
 
-    @BeforeEach
-    void before(){
-        DriverManagerDataSource dataSource = new DriverManagerDataSource(URL, USERNAME, PASSWORD);
-        memberRepository = new MemberRepositoryV3(dataSource);
-        //dataSource를 꼭 넣어주어야 Connection을 생성할 수 있다.
-        PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
-        memberService = new MemberServiceV3_1(transactionManager,memberRepository);
+    /**
+     * @SpringBootTest로 스프링 컨테이너를 띄우고 난 후에 내가 직접 만든 Bean들을 컨테이너에 넣고 싶을때 사용하는 어노테이션
+     */
+    @TestConfiguration
+    static class TestConfig{
+
+        private final DataSource dataSource;
+
+        public TestConfig(DataSource dataSource) {
+            this.dataSource = dataSource;
+        }
+        @Bean
+        MemberRepositoryV3 memberRepositoryV3(){
+            return new MemberRepositoryV3(dataSource);
+        }
+        @Bean
+        MemberServiceV3_3 memberServiceV3_3(){
+            return new MemberServiceV3_3(memberRepositoryV3());
+        }
+    }
+
+    @Test
+    void AopCheck(){
+        log.info("memberService class={}",memberService.getClass());
+        log.info("memberRepository={}",memberRepository.getClass());
+        Assertions.assertThat(AopUtils.isAopProxy(memberService)).isTrue();
+        Assertions.assertThat(AopUtils.isAopProxy(memberRepository)).isFalse();
     }
     @AfterEach
     void after() throws SQLException {

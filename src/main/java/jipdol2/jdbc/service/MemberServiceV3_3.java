@@ -2,45 +2,31 @@ package jipdol2.jdbc.service;
 
 import jipdol2.jdbc.domain.Member;
 import jipdol2.jdbc.repository.MemberRepositoryV3;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * 트랜잭션 - 트랜잭션 템플릿
+ * 트랜잭션 - @Transactional AOP
  */
 @Slf4j
-public class MemberServiceV3_2 {
+public class MemberServiceV3_3 {
 
 //    private final DataSource dataSource;
 //    private final PlatformTransactionManager transactionManager;
-    private final TransactionTemplate txTemplate;
     private final MemberRepositoryV3 repository;
 
-    public MemberServiceV3_2(PlatformTransactionManager transactionManager, MemberRepositoryV3 repository) {
-        this.txTemplate = new TransactionTemplate(transactionManager);
+    public MemberServiceV3_3(MemberRepositoryV3 repository) {
         this.repository = repository;
     }
 
+    @Transactional
     public void accountTransfer(String fromId, String toId, int money) throws SQLException {
-
-        txTemplate.executeWithoutResult((status)->{
-            /**
-             *  트랜잭션 템플릿을 사용했음에도 불구하고 완벽하게 비지니스 로직만 남기지는 못했다...
-             *  이를 해결하기 위해 AOP를 사용한다!!!
-             */
-            try {
-                bizLogic(fromId,toId,money);
-            } catch (SQLException e) {
-                throw new IllegalStateException(e);
-            }
-        });
+        bizLogic(fromId,toId,money);
     }
 
     private void bizLogic(String fromId, String toId, int money) throws SQLException {
