@@ -1,11 +1,8 @@
 package jipdol2.jdbc.exception.translator;
 
-import jipdol2.jdbc.connection.ConnectionConst;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -17,13 +14,12 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.SQLXML;
 
 import static jipdol2.jdbc.connection.ConnectionConst.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
-public class SpringExceptionTranslater {
+public class SpringExceptionTranslator {
 
     DataSource dataSource;
 
